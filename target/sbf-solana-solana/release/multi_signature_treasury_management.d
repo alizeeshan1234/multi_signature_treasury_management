@@ -1,0 +1,1 @@
+/Users/mohammedzeeshan/Desktop/multi-signature-treasury-management/target/sbf-solana-solana/release/multi_signature_treasury_management.so: /Users/mohammedzeeshan/Desktop/multi-signature-treasury-management/src/lib.rs
