@@ -15,6 +15,10 @@ pub enum MultiSignatureInstructions {
     #[account(5, name="system_program", desc="System program")]
     InitMultisigVault = 0, //Create multi-sign vault (name, description, members, threshold)
     
+    #[account(0, writable, signer, name="admin", desc="Account that pays for account creation")]
+    #[account(1, name="member", desc="member to add")]
+    #[account(2, writable, name="multisig_info", desc="multisig_info account")]
+    #[account(3, name="system_program", desc="System program")]
     AddMember = 1, //Add new member to the multi-sign vault
     MultisigVaultReview = 2, //Info regarding the multi-sign vault
 }

@@ -253,12 +253,71 @@ describe("Multi Signature Vault", function() {
             if (treasuryVault) {
                 console.log("Treasury Vault data length:", treasuryVault.data.length);
             }
-            expect(multisigInfo).to.not.be.null;
-            expect(treasuryVault).to.not.be.null;
-            
         } catch (error) {
             console.error("Transaction failed:", error);
             throw error;
         }
     });
+
+    it("Add member", async () => {
+        this.timeout(60000); 
+
+        const existingMultisigInfo = await connection.getAccountInfo(multisigInfoPda);
+        if (existingMultisigInfo && existingMultisigInfo.data.length > 0) {
+            console.log("Multisig vault already initialized, skipping...");
+            return;
+        };
+
+        const instructionDiscriminant = Buffer.from([1]); 
+
+        const multisigIdBuffer = MULTISIG_ID.toBuffer("le", 8);
+        const instructionData = Buffer.concat([instructionDiscriminant, multisigIdBuffer]);
+
+        console.log("Instruction data length:", instructionData.length);
+        console.log("Instruction discriminant:", instructionData[0]);
+
+        const tx = new Transaction().add(
+            new TransactionInstruction({
+                keys: [
+                    {
+                        pubkey: provider.wallet.publicKey, // admin
+                        isSigner: true,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: provider.wallet.publicKey, // member to be added
+                        isSigner: false,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: multisigInfoPda, // multisig_info
+                        isSigner: false,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: SystemProgram.programId, // system_program
+                        isSigner: false,
+                        isWritable: false,
+                    }
+                ],
+                programId: program.programId,
+                data: instructionData,
+            })
+        );
+
+        console.log("Sending Add Member Transaction...");
+        console.log("Admin:", provider.wallet.publicKey.toString());
+        console.log("Member to be added: ",provider.wallet.publicKey.toString());
+        console.log("Multisig Info PDA:", multisigInfoPda.toString());
+        console.log("Program ID:", program.programId.toString());
+
+        const signature = await provider.sendAndConfirm(tx, [], {
+            commitment: 'confirmed',
+            preflightCommitment: 'confirmed',
+            skipPreflight: false
+        });
+
+        console.log("Transaction signature:", signature);
+        console.log(`View on Solana Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+    })
 });

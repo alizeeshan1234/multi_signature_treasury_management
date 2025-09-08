@@ -54,40 +54,7 @@
           ]
         }
       ],
-      "args": [
-        {
-          "name": "multisigId",
-          "type": "u64"
-        },
-        {
-          "name": "name",
-          "type": {
-            "array": ["u8", 12]
-          }
-        },
-        {
-          "name": "description",
-          "type": {
-            "array": ["u8", 80]
-          }
-        },
-        {
-          "name": "memberCount",
-          "type": "u64"
-        },
-        {
-          "name": "threshold",
-          "type": "u64"
-        },
-        {
-          "name": "proposalExpiry",
-          "type": "i64"
-        },
-        {
-          "name": "minimumBalance",
-          "type": "u64"
-        }
-      ],
+      "args": [],
       "discriminant": {
         "type": "u8",
         "value": 0
@@ -129,12 +96,7 @@
           ]
         }
       ],
-      "args": [
-        {
-          "name": "multisigId",
-          "type": "u64"
-        }
-      ],
+      "args": [],
       "discriminant": {
         "type": "u8",
         "value": 1

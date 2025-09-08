@@ -24,6 +24,5 @@ fn process_instruction(
         MultiSignatureInstructions::MultisigVaultReview => {},
     }
 
-
     Ok(())
 }

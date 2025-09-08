@@ -95,40 +95,7 @@
     },
     {
       "name": "AddMember",
-      "accounts": [
-        {
-          "name": "admin",
-          "isMut": true,
-          "isSigner": true,
-          "docs": [
-            "Account that pays for account creation"
-          ]
-        },
-        {
-          "name": "member",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "member to add"
-          ]
-        },
-        {
-          "name": "multisigInfo",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "multisig_info account"
-          ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "System program"
-          ]
-        }
-      ],
+      "accounts": [],
       "args": [
         {
           "name": "multisigId",
