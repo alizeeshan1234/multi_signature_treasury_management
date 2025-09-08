@@ -1,0 +1,221 @@
+{
+  "version": "0.1.0",
+  "name": "multi_signature_treasury_management",
+  "instructions": [
+    {
+      "name": "InitMultisigVault",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Account that pays for account creation"
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "mint account"
+          ]
+        },
+        {
+          "name": "multisigInfo",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "multisig_info account"
+          ]
+        },
+        {
+          "name": "treasuryVaultAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "treasury vault account"
+          ]
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "TokenProgram"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "multisigId",
+          "type": "u64"
+        },
+        {
+          "name": "name",
+          "type": {
+            "array": ["u8", 12]
+          }
+        },
+        {
+          "name": "description",
+          "type": {
+            "array": ["u8", 80]
+          }
+        },
+        {
+          "name": "memberCount",
+          "type": "u64"
+        },
+        {
+          "name": "threshold",
+          "type": "u64"
+        },
+        {
+          "name": "proposalExpiry",
+          "type": "i64"
+        },
+        {
+          "name": "minimumBalance",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    },
+    {
+      "name": "AddMember",
+      "accounts": [],
+      "args": [
+        {
+          "name": "multisigId",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
+    },
+    {
+      "name": "MultisigVaultReview",
+      "accounts": [],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 2
+      }
+    }
+  ],
+  "accounts": [
+    {
+      "name": "MultiSignatureVault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "admin",
+            "type": "publicKey"
+          },
+          {
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "name": "name",
+            "type": {
+              "array": [
+                "u8",
+                12
+              ]
+            }
+          },
+          {
+            "name": "description",
+            "type": {
+              "array": [
+                "u8",
+                80
+              ]
+            }
+          },
+          {
+            "name": "memberCount",
+            "type": "u64"
+          },
+          {
+            "name": "memberKeys",
+            "type": {
+              "array": [
+                "publicKey",
+                10
+              ]
+            }
+          },
+          {
+            "name": "threshold",
+            "type": "u64"
+          },
+          {
+            "name": "proposalExpiry",
+            "type": "i64"
+          },
+          {
+            "name": "totalProposals",
+            "type": "u64"
+          },
+          {
+            "name": "treasuryVault",
+            "type": "publicKey"
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          },
+          {
+            "name": "lastUpdated",
+            "type": "i64"
+          },
+          {
+            "name": "minimumBalance",
+            "type": "u64"
+          },
+          {
+            "name": "activeProposals",
+            "type": "u64"
+          },
+          {
+            "name": "executedProposals",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "treasuryVaultBump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank",
+    "address": "4taWcHcTu9CbPv6JiB9HNxU9aQrni7dARoDtyv9GsWQ6"
+  }
+}

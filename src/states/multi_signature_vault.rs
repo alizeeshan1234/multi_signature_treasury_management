@@ -1,6 +1,7 @@
 use pinocchio::{account_info::{AccountInfo, Ref, RefMut}, program_error::ProgramError, pubkey::Pubkey, *};
+use shank::ShankAccount;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, ShankAccount)]
 pub struct MultiSignatureVault {
     pub id: u64,
     pub admin: Pubkey,

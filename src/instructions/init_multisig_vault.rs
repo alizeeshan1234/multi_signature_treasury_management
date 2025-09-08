@@ -18,10 +18,6 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
         return Err(ProgramError::InvalidAccountData);
     };
 
-    if *mint.owner() != pinocchio_token::id() {
-        return Err(ProgramError::InvalidAccountData);
-    };
-
     if instruction_data.len() < 132 {
         return Err(ProgramError::InvalidInstructionData);
     }
@@ -56,18 +52,6 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
         instruction_data[124..132].try_into().map_err(|_| ProgramError::InvalidInstructionData)?
     );
 
-    if threshold == 0 || threshold > member_count {
-        return Err(ProgramError::InvalidInstructionData);
-    };
-
-    if member_count == 0 || member_count > 10 {
-        return Err(ProgramError::InvalidInstructionData);
-    };
-
-    if proposal_expiry <= 0 {
-        return Err(ProgramError::InvalidInstructionData);
-    };
-
     let (multisig_info_pda, multisig_info_bump) = pubkey::find_program_address(
         &[b"multisig_info", admin.key().as_ref(), multisig_id.to_le_bytes().as_ref()],
         &crate::ID
@@ -78,7 +62,7 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
     };
 
     let (treasury_vault_pda, treasury_vault_bump) = pubkey::find_program_address(
-        &[b"multisig_vault", mint.key().as_ref(), multisig_info.key().as_ref()],
+        &[b"multisig_vault", mint.key().as_ref(), admin.key().as_ref()],
         &crate::ID
     );
 
@@ -86,15 +70,15 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
         return Err(ProgramError::InvalidAccountData);
     };
 
-    let mut multi_signature_vault_info = MultiSignatureVault::from_account_info_mut(multisig_info)?;
-
     if treasury_vault.data_is_empty() {
         let lamports = Rent::get()?.minimum_balance(TokenAccount::LEN);
 
+        let bump_ref = &[treasury_vault_bump];
         let seeds = seeds!(
             b"multisig_vault", 
             mint.key().as_ref(), 
-            multisig_info.key().as_ref()
+            admin.key().as_ref(),
+            bump_ref
         );
         let signer_seeds = Signer::from(&seeds);
 
@@ -111,6 +95,8 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
             mint,
             owner: &multisig_info_pda, 
         }.invoke()?;
+    } else {
+        return Err(ProgramError::AccountAlreadyInitialized);
     }
 
     if multisig_info.data_is_empty() {
@@ -134,12 +120,14 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
             owner: &crate::ID
         }.invoke_signed(&[signer_seeds])?;
 
+        let mut multi_signature_vault_info = MultiSignatureVault::from_account_info_mut(multisig_info)?;
+
         multi_signature_vault_info.id = multisig_id;
         multi_signature_vault_info.admin = *admin.key();
         multi_signature_vault_info.is_active = true;
         multi_signature_vault_info.name = name;           
         multi_signature_vault_info.description = description; 
-        multi_signature_vault_info.member_count = member_count;
+        multi_signature_vault_info.member_count = 0;
         multi_signature_vault_info.member_keys = [Pubkey::default(); 10];
         multi_signature_vault_info.threshold = threshold;
         multi_signature_vault_info.proposal_expiry = proposal_expiry;
@@ -152,8 +140,9 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
         multi_signature_vault_info.executed_proposals = 0;
         multi_signature_vault_info.bump = multisig_info_bump;
         multi_signature_vault_info.treasury_vault_bump = treasury_vault_bump;
+    } else {
+        return Err(ProgramError::AccountAlreadyInitialized);
     };
-
     Ok(())
 }
 
