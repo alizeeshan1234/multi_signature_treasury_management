@@ -60,22 +60,6 @@
           "type": "u64"
         },
         {
-          "name": "name",
-          "type": {
-            "array": ["u8", 12]
-          }
-        },
-        {
-          "name": "description",
-          "type": {
-            "array": ["u8", 80]
-          }
-        },
-        {
-          "name": "memberCount",
-          "type": "u64"
-        },
-        {
           "name": "threshold",
           "type": "u64"
         },
@@ -95,7 +79,40 @@
     },
     {
       "name": "AddMember",
-      "accounts": [],
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Account that pays for account creation"
+          ]
+        },
+        {
+          "name": "member",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "member to add"
+          ]
+        },
+        {
+          "name": "multisigInfo",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "multisig_info account"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program"
+          ]
+        }
+      ],
       "args": [
         {
           "name": "multisigId",

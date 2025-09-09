@@ -6,8 +6,6 @@ pub struct MultiSignatureVault {
     pub id: u64,
     pub admin: Pubkey,
     pub is_active: bool,              // Vault status
-    pub name: [u8; 12],               // Fixed-size instead of String
-    pub description: [u8; 80],        // Fixed-size instead of String
     pub member_count: u64,
     pub member_keys: [Pubkey; 10],
     pub threshold: u64,

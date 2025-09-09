@@ -17,7 +17,8 @@ if (!idl.metadata?.address) {
 const PINOCCHIO_TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
 describe("Multi Signature Vault", function() {
-    const MULTISIG_ID = new BN(199);
+    const MULTISIG_ID = new BN(201);
+    const PROPOSAL_ID = new BN(5);
     let connection: Connection;
     let program: Program;
     let provider: AnchorProvider;
@@ -25,6 +26,7 @@ describe("Multi Signature Vault", function() {
     let treasuryVaultPda: PublicKey;
     let mint: PublicKey;
     let payer: Keypair;
+    let streamProposalAccount: PublicKey;
 
     before(async function() {
         // FIXED: Set timeout for the before hook
@@ -81,6 +83,15 @@ describe("Multi Signature Vault", function() {
                 ],
                 program.programId
             );
+
+            [streamProposalAccount] = PublicKey.findProgramAddressSync(
+                [
+                    Buffer.from("stream_proposal"),
+                    PROPOSAL_ID.toBuffer("le", 8),
+                    MULTISIG_ID.toBuffer("le", 8)
+                ],
+                program.programId
+            )
 
             console.log("Mint created:", mint.toString());
             console.log("Multisig Info PDA:", multisigInfoPda.toString());
@@ -142,122 +153,129 @@ describe("Multi Signature Vault", function() {
         }
     }
 
-    it("Initialize multisignature vault", async function() {
-        this.timeout(60000); 
+   it("Initialize multisignature vault", async function() {
+    this.timeout(60000); 
 
-        const existingMultisigInfo = await connection.getAccountInfo(multisigInfoPda);
-        if (existingMultisigInfo && existingMultisigInfo.data.length > 0) {
-            console.log("Multisig vault already initialized, skipping...");
-            return;
+    const existingMultisigInfo = await connection.getAccountInfo(multisigInfoPda);
+    if (existingMultisigInfo && existingMultisigInfo.data.length > 0) {
+        console.log("Multisig vault already initialized, skipping...");
+        return;
+    }
+
+    // FIXED: Don't include discriminant in instruction_data - it's handled by the entrypoint
+    const multisigIdBuffer = MULTISIG_ID.toBuffer("le", 8);     // 8 bytes (0-7)
+    const threshold = new BN(2).toBuffer("le", 8);             // 8 bytes (8-15)  
+    const proposalExpiry = new BN(86400).toBuffer("le", 8);    // 8 bytes (16-23)
+    const minimumBalance = new BN(1000000).toBuffer("le", 8);  // 8 bytes (24-31)
+    
+    const instructionData = Buffer.concat([
+        multisigIdBuffer,     // bytes 0-7
+        threshold,           // bytes 8-15
+        proposalExpiry,      // bytes 16-23  
+        minimumBalance       // bytes 24-31
+    ]);
+    // Total: 32 bytes (matches Rust expectation)
+
+    console.log("Instruction data length:", instructionData.length);
+    console.log("Expected length: 32 bytes");
+    
+    const tx = new Transaction().add(
+        new TransactionInstruction({
+            keys: [
+                {
+                    pubkey: provider.wallet.publicKey, // admin
+                    isSigner: true,
+                    isWritable: true,
+                },
+                {
+                    pubkey: mint, // mint
+                    isSigner: false,
+                    isWritable: false,
+                },
+                {
+                    pubkey: multisigInfoPda, // multisig_info
+                    isSigner: false,
+                    isWritable: true,
+                },
+                {
+                    pubkey: treasuryVaultPda, // treasury_vault_account
+                    isSigner: false,
+                    isWritable: true,
+                },
+                {
+                    pubkey: PINOCCHIO_TOKEN_PROGRAM_ID, // token_program
+                    isSigner: false,
+                    isWritable: false,
+                },
+                {
+                    pubkey: SystemProgram.programId, // system_program
+                    isSigner: false,
+                    isWritable: false,
+                }
+            ],
+            programId: program.programId,
+            data: Buffer.concat([
+                Buffer.from([0]), // instruction discriminant (InitMultisigVault = 0)
+                instructionData   // actual instruction data
+            ])
+        })
+    );
+
+    console.log("Sending transaction...");
+    console.log("Admin:", provider.wallet.publicKey.toString());
+    console.log("Mint:", mint.toString());
+    console.log("Multisig Info PDA:", multisigInfoPda.toString());
+    console.log("Treasury Vault PDA:", treasuryVaultPda.toString());
+    console.log("Program ID:", program.programId.toString());
+    console.log("Token Program:", PINOCCHIO_TOKEN_PROGRAM_ID.toString());
+
+    try {
+        const signature = await provider.sendAndConfirm(tx, [], {
+            commitment: 'confirmed',
+            preflightCommitment: 'confirmed',
+            skipPreflight: false
+        });
+        
+        console.log("Transaction signature:", signature);
+        console.log(`View on Solana Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+
+        console.log("Waiting for transaction confirmation...");
+        await connection.confirmTransaction(signature, 'confirmed');
+        
+        console.log("Waiting for account propagation...");
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        const multisigInfo = await connection.getAccountInfo(multisigInfoPda);
+        const treasuryVault = await connection.getAccountInfo(treasuryVaultPda);
+        
+        console.log("Multisig Info Account created:", multisigInfo !== null);
+        console.log("Treasury Vault Account created:", treasuryVault !== null);
+        
+        if (multisigInfo) {
+            console.log("Multisig Info data length:", multisigInfo.data.length);
+            console.log("Multisig Info owner:", multisigInfo.owner.toString());
+            console.log("Expected owner (program):", program.programId.toString());
         }
-
-        const instructionDiscriminant = Buffer.from([0]); 
-        
-        const multisigIdBuffer = MULTISIG_ID.toBuffer("le", 8);
-        
-        const name = "TestVault";
-        const nameBuffer = Buffer.alloc(12, 0);
-        Buffer.from(name, 'utf8').copy(nameBuffer, 0);
-        
-        const description = "Test multisig vault for treasury management";
-        const descriptionBuffer = Buffer.alloc(80, 0);
-        Buffer.from(description, 'utf8').copy(descriptionBuffer, 0);
-        
-        const memberCount = new BN(3).toBuffer("le", 8);
-        const threshold = new BN(2).toBuffer("le", 8);
-        const proposalExpiry = new BN(86400).toBuffer("le", 8);
-        const minimumBalance = new BN(1000000).toBuffer("le", 8);
-        
-        const instructionData = Buffer.concat([
-            instructionDiscriminant, 
-            multisigIdBuffer,    
-            nameBuffer,          
-            descriptionBuffer,   
-            memberCount,         
-            threshold,           
-            proposalExpiry,      
-            minimumBalance       
-        ]);
-
-        console.log("Instruction data length:", instructionData.length);
-        console.log("Instruction discriminant:", instructionData[0]);
-        
-        const tx = new Transaction().add(
-            new TransactionInstruction({
-                keys: [
-                    {
-                        pubkey: provider.wallet.publicKey, // admin
-                        isSigner: true,
-                        isWritable: true,
-                    },
-                    {
-                        pubkey: mint, // mint
-                        isSigner: false,
-                        isWritable: false,
-                    },
-                    {
-                        pubkey: multisigInfoPda, // multisig_info
-                        isSigner: false,
-                        isWritable: true,
-                    },
-                    {
-                        pubkey: treasuryVaultPda, // treasury_vault_account
-                        isSigner: false,
-                        isWritable: true,
-                    },
-                    {
-                        pubkey: PINOCCHIO_TOKEN_PROGRAM_ID, // token_program
-                        isSigner: false,
-                        isWritable: false,
-                    },
-                    {
-                        pubkey: SystemProgram.programId, // system_program
-                        isSigner: false,
-                        isWritable: false,
-                    }
-                ],
-                programId: program.programId,
-                data: instructionData,
-            })
-        );
-
-        console.log("Sending transaction...");
-        console.log("Admin:", provider.wallet.publicKey.toString());
-        console.log("Mint:", mint.toString());
-        console.log("Multisig Info PDA:", multisigInfoPda.toString());
-        console.log("Treasury Vault PDA:", treasuryVaultPda.toString());
-        console.log("Program ID:", program.programId.toString());
-        console.log("Token Program:", PINOCCHIO_TOKEN_PROGRAM_ID.toString());
-
-        try {
-            const signature = await provider.sendAndConfirm(tx, [], {
-                commitment: 'confirmed',
-                preflightCommitment: 'confirmed',
-                skipPreflight: false
-            });
-            
-            console.log("Transaction signature:", signature);
-            console.log(`View on Solana Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
-
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            const multisigInfo = await connection.getAccountInfo(multisigInfoPda);
-            const treasuryVault = await connection.getAccountInfo(treasuryVaultPda);
-            
-            console.log("Multisig Info Account created:", multisigInfo !== null);
-            console.log("Treasury Vault Account created:", treasuryVault !== null);
-            
-            if (multisigInfo) {
-                console.log("Multisig Info data length:", multisigInfo.data.length);
-            }
-            if (treasuryVault) {
-                console.log("Treasury Vault data length:", treasuryVault.data.length);
-            }
-        } catch (error) {
-            console.error("Transaction failed:", error);
-            throw error;
+        if (treasuryVault) {
+            console.log("Treasury Vault data length:", treasuryVault.data.length);
+            console.log("Treasury Vault owner:", treasuryVault.owner.toString());
+            console.log("Expected owner (token program):", PINOCCHIO_TOKEN_PROGRAM_ID.toString());
         }
-    });
+        
+        console.log("✅ Accounts created successfully!");
+
+        const multisigAccount = await connection.getAccountInfo(multisigInfoPda);
+        console.log(`MultisigAccountInfo: ${multisigAccount}`);
+
+    } catch (error) {
+        console.error("Transaction failed:", error);
+        if (error.logs) {
+            console.error("Program logs:");
+            error.logs.forEach((log, i) => console.error(`  ${i}: ${log}`));
+        }
+        throw error;
+    }
+});
 
     it("Add member", async () => {
         this.timeout(60000); 
@@ -317,7 +335,74 @@ describe("Multi Signature Vault", function() {
             skipPreflight: false
         });
 
+        console.log(`Transction Signature: ${signature}`);
+
+    })
+
+    it("Create Stream Proposal", async () => {
+        this.timeout(60000); 
+        
+        const instructionDiscriminant = Buffer.from([2]); 
+        const proposalIdBuffer = PROPOSAL_ID.toBuffer("le", 8); 
+        const multisigIdBuffer = MULTISIG_ID.toBuffer("le", 8); 
+        const streamType = Buffer.from([1]); // Fixed: Convert BN to single byte buffer
+        const requiredThreshold = Buffer.from([2]); // Fixed: Convert BN to single byte buffer             
+        const votingDeadline = new BN(86400).toBuffer("le", 8);    
+
+        const streamNameStr = "Treasury Stream 001";
+        const streamNameBuffer = Buffer.alloc(32);
+        Buffer.from(streamNameStr, 'utf8').copy(streamNameBuffer, 0);
+
+        const streamDescStr = "Monthly treasury distribution stream for community rewards and development funding";
+        const streamDescBuffer = Buffer.alloc(128);
+        Buffer.from(streamDescStr, 'utf8').copy(streamDescBuffer, 0);
+
+        const instructionData = Buffer.concat([
+            instructionDiscriminant,  // 1 byte
+            proposalIdBuffer,         // 8 bytes (0-8)
+            multisigIdBuffer,         // 8 bytes (8-16) 
+            streamType,               // 1 byte (16) - Fixed
+            requiredThreshold,        // 1 byte (17) - Fixed
+            votingDeadline,           // 8 bytes (18-26)
+            streamNameBuffer,         // 32 bytes (26-58)
+            streamDescBuffer          // 128 bytes (58-186)
+        ]);
+
+        console.log("Instruction data length:", instructionData.length); // Should be 186 bytes
+
+        const tx = new Transaction().add(
+            new TransactionInstruction({
+                keys: [
+                    {
+                        pubkey: provider.wallet.publicKey, // proposer
+                        isSigner: true,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: streamProposalAccount, // stream_proposal_account
+                        isSigner: false,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: SystemProgram.programId, // system_program
+                        isSigner: false,
+                        isWritable: false,
+                    }
+                ],
+                programId: program.programId,
+                data: instructionData
+            })
+        );
+
+        console.log(`Stream Proposal Account PDA: ${streamProposalAccount.toString()}`);
+
+        const signature = await provider.sendAndConfirm(tx, [], {
+            commitment: 'confirmed',
+            preflightCommitment: 'confirmed',
+            skipPreflight: false
+        });
+    
         console.log("Transaction signature:", signature);
         console.log(`View on Solana Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
-    })
+    });
 });
