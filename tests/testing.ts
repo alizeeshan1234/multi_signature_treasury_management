@@ -1,6 +1,5 @@
 import * as anchor from '@coral-xyz/anchor';
 import { describe, it } from 'mocha';
-import { expect } from 'chai';
 import { Connection, PublicKey, Keypair, SystemProgram, Transaction, TransactionInstruction, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 import fs from "fs";
@@ -239,34 +238,6 @@ describe("Multi Signature Vault", function() {
         console.log("Transaction signature:", signature);
         console.log(`View on Solana Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
 
-        console.log("Waiting for transaction confirmation...");
-        await connection.confirmTransaction(signature, 'confirmed');
-        
-        console.log("Waiting for account propagation...");
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        const multisigInfo = await connection.getAccountInfo(multisigInfoPda);
-        const treasuryVault = await connection.getAccountInfo(treasuryVaultPda);
-        
-        console.log("Multisig Info Account created:", multisigInfo !== null);
-        console.log("Treasury Vault Account created:", treasuryVault !== null);
-        
-        if (multisigInfo) {
-            console.log("Multisig Info data length:", multisigInfo.data.length);
-            console.log("Multisig Info owner:", multisigInfo.owner.toString());
-            console.log("Expected owner (program):", program.programId.toString());
-        }
-        if (treasuryVault) {
-            console.log("Treasury Vault data length:", treasuryVault.data.length);
-            console.log("Treasury Vault owner:", treasuryVault.owner.toString());
-            console.log("Expected owner (token program):", PINOCCHIO_TOKEN_PROGRAM_ID.toString());
-        }
-        
-        console.log("✅ Accounts created successfully!");
-
-        const multisigAccount = await connection.getAccountInfo(multisigInfoPda);
-        console.log(`MultisigAccountInfo: ${multisigAccount}`);
-
     } catch (error) {
         console.error("Transaction failed:", error);
         if (error.logs) {
@@ -341,7 +312,7 @@ describe("Multi Signature Vault", function() {
 
     it("Create Stream Proposal", async () => {
         this.timeout(60000); 
-        
+
         const instructionDiscriminant = Buffer.from([2]); 
         const proposalIdBuffer = PROPOSAL_ID.toBuffer("le", 8); 
         const multisigIdBuffer = MULTISIG_ID.toBuffer("le", 8); 

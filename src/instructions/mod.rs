@@ -4,6 +4,7 @@ use shank::ShankInstruction;
 pub mod init_multisig_vault;
 pub mod add_members;
 pub mod create_stream_proposal;
+pub mod vote_on_proposal;
 
 #[repr(u8)]
 #[derive(ShankInstruction)]
@@ -27,6 +28,8 @@ pub enum MultiSignatureInstructions {
     #[account(2, name="system_program", desc="System program")]
     CreateStreamProposal = 2,
 
+    VoteOnProposal = 3,
+
 }
 
 impl TryFrom<&u8> for MultiSignatureInstructions {
@@ -36,6 +39,8 @@ impl TryFrom<&u8> for MultiSignatureInstructions {
         match value {
             0 => Ok(MultiSignatureInstructions::InitMultisigVault),
             1 => Ok(MultiSignatureInstructions::AddMember),
+            2 => Ok(MultiSignatureInstructions::CreateStreamProposal),
+            3 => Ok(MultiSignatureInstructions::VoteOnProposal),
             _ => Err(ProgramError::InvalidInstructionData)
         }
     }
