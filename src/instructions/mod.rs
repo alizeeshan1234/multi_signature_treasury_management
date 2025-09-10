@@ -7,6 +7,9 @@ pub mod create_stream_proposal;
 pub mod vote_on_proposal;
 pub mod deposit_funds;
 
+pub mod init_batch_payments;
+pub mod batch_payments;
+
 #[repr(u8)]
 #[derive(ShankInstruction)]
 pub enum MultiSignatureInstructions {
