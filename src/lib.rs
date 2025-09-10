@@ -23,7 +23,7 @@ fn process_instruction(
         MultiSignatureInstructions::AddMember => instructions::add_members::process_add_member(accounts, instruction_data)?,
         MultiSignatureInstructions::CreateStreamProposal => instructions::create_stream_proposal::process_create_stream_proposal(accounts, instruction_data)?,
         MultiSignatureInstructions::VoteOnProposal => instructions::vote_on_proposal::process_vote_on_proposal(accounts, instruction_data)?,
-        MultiSignatureInstructions::DepositTokens => {},
+        MultiSignatureInstructions::DepositTokens => instructions::deposit_funds::deposit_funds_to_treasury(accounts, instruction_data)?,
         MultiSignatureInstructions::ExecuteApprovedProposal => {},
         MultiSignatureInstructions::ClaimStreamPayment => {},
         MultiSignatureInstructions::RemoveMember => {},

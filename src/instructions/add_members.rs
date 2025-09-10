@@ -35,12 +35,17 @@ pub fn process_add_member(accounts: &[AccountInfo], instruction_data: &[u8]) -> 
     if multisig_account_info.admin != *admin.key() {
         log!("Only the vault admin can add members");
         return Err(ProgramError::InvalidAccountData);
-    }
+    };
+
+    if *member.key() == multisig_account_info.admin {
+        log!("Admin cannot be added as a regular member");
+        return Err(ProgramError::InvalidAccountData);
+    };
 
     if !multisig_account_info.is_active {
         log!("Cannot add member: vault is inactive");
         return Err(ProgramError::InvalidAccountData);
-    }
+    };
 
     if multisig_account_info.member_count >= 10 {
         log!("Cannot add member: maximum capacity (10) reached");
@@ -49,11 +54,6 @@ pub fn process_add_member(accounts: &[AccountInfo], instruction_data: &[u8]) -> 
 
     if *member.key() == Pubkey::default() {
         log!("Cannot add default/zero address as member");
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    if *member.key() == multisig_account_info.admin {
-        log!("Admin cannot be added as a regular member");
         return Err(ProgramError::InvalidAccountData);
     }
 

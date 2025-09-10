@@ -67,7 +67,7 @@ pub fn deposit_funds_to_treasury(accounts: &[AccountInfo], instruction_data: &[u
         &[
             b"multisig_vault", 
             mint.key().as_ref(), 
-            multisig_info_pda.as_ref()
+            multisig_id.to_le_bytes().as_ref()
         ],
         &crate::ID
     );

@@ -50,11 +50,19 @@ pub fn process_create_stream_proposal(accounts: &[AccountInfo], instruction_data
         return Err(ProgramError::InvalidInstructionData);
     }
 
+    if stream_name[0] == 0 && stream_name[1] == 0 && stream_name[2] == 0 && stream_name[3] == 0 {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    if stream_description[0] == 0 {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
     // Load and validate multisig account
-    let multisig_account_info = MultiSignatureVault::from_account_info(multisig_account)?;
+    let mut multisig_account_info_mut = MultiSignatureVault::from_account_info_mut(multisig_account)?;
     
     let (multisig_info_pda, _) = pubkey::find_program_address(
-        &[b"multisig_info", multisig_account_info.admin.as_ref(), multisig_id.to_le_bytes().as_ref()],
+        &[b"multisig_info", multisig_account_info_mut.admin.as_ref(), multisig_id.to_le_bytes().as_ref()],
         &crate::ID
     );
 
@@ -64,7 +72,7 @@ pub fn process_create_stream_proposal(accounts: &[AccountInfo], instruction_data
 
     // Validate proposer is a member of the multisig
     let mut is_multisig_member = false;
-    for member in multisig_account_info.member_keys {
+    for member in multisig_account_info_mut.member_keys {
         if *proposer.key() == member {
             is_multisig_member = true;
             break;
@@ -75,7 +83,7 @@ pub fn process_create_stream_proposal(accounts: &[AccountInfo], instruction_data
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if required_threshold == 0 || required_threshold as u64 > multisig_account_info.member_count {
+    if required_threshold == 0 || required_threshold as u64 > multisig_account_info_mut.member_count {
         return Err(ProgramError::InvalidInstructionData);
     }
 
@@ -128,6 +136,7 @@ pub fn process_create_stream_proposal(accounts: &[AccountInfo], instruction_data
         stream_proposal_account_info.required_threshold = required_threshold;
         stream_proposal_account_info.status = ProposalStatus::Active as u8;
         
+        multisig_account_info_mut.active_proposals = multisig_account_info_mut.active_proposals.checked_add(1).unwrap();
     } else {
         return Err(ProgramError::AccountAlreadyInitialized);
     }
