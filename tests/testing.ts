@@ -16,8 +16,8 @@ if (!idl.metadata?.address) {
 const PINOCCHIO_TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
 describe("Multi Signature Vault", function() {
-    const MULTISIG_ID = new BN(201);
-    const PROPOSAL_ID = new BN(5);
+    const MULTISIG_ID = new BN(206);
+    const PROPOSAL_ID = new BN(11);
     let connection: Connection;
     let program: Program;
     let provider: AnchorProvider;
@@ -28,8 +28,7 @@ describe("Multi Signature Vault", function() {
     let streamProposalAccount: PublicKey;
 
     before(async function() {
-        // FIXED: Set timeout for the before hook
-        this.timeout(60000); // 60 seconds for setup
+        this.timeout(60000); 
 
         try {
             connection = new Connection('https://api.devnet.solana.com', 'confirmed');
@@ -153,112 +152,109 @@ describe("Multi Signature Vault", function() {
     }
 
    it("Initialize multisignature vault", async function() {
-    this.timeout(60000); 
-
-    const existingMultisigInfo = await connection.getAccountInfo(multisigInfoPda);
-    if (existingMultisigInfo && existingMultisigInfo.data.length > 0) {
-        console.log("Multisig vault already initialized, skipping...");
-        return;
-    }
-
-    // FIXED: Don't include discriminant in instruction_data - it's handled by the entrypoint
-    const multisigIdBuffer = MULTISIG_ID.toBuffer("le", 8);     // 8 bytes (0-7)
-    const threshold = new BN(2).toBuffer("le", 8);             // 8 bytes (8-15)  
-    const proposalExpiry = new BN(86400).toBuffer("le", 8);    // 8 bytes (16-23)
-    const minimumBalance = new BN(1000000).toBuffer("le", 8);  // 8 bytes (24-31)
-    
-    const instructionData = Buffer.concat([
-        multisigIdBuffer,     // bytes 0-7
-        threshold,           // bytes 8-15
-        proposalExpiry,      // bytes 16-23  
-        minimumBalance       // bytes 24-31
-    ]);
-    // Total: 32 bytes (matches Rust expectation)
-
-    console.log("Instruction data length:", instructionData.length);
-    console.log("Expected length: 32 bytes");
-    
-    const tx = new Transaction().add(
-        new TransactionInstruction({
-            keys: [
-                {
-                    pubkey: provider.wallet.publicKey, // admin
-                    isSigner: true,
-                    isWritable: true,
-                },
-                {
-                    pubkey: mint, // mint
-                    isSigner: false,
-                    isWritable: false,
-                },
-                {
-                    pubkey: multisigInfoPda, // multisig_info
-                    isSigner: false,
-                    isWritable: true,
-                },
-                {
-                    pubkey: treasuryVaultPda, // treasury_vault_account
-                    isSigner: false,
-                    isWritable: true,
-                },
-                {
-                    pubkey: PINOCCHIO_TOKEN_PROGRAM_ID, // token_program
-                    isSigner: false,
-                    isWritable: false,
-                },
-                {
-                    pubkey: SystemProgram.programId, // system_program
-                    isSigner: false,
-                    isWritable: false,
-                }
-            ],
-            programId: program.programId,
-            data: Buffer.concat([
-                Buffer.from([0]), // instruction discriminant (InitMultisigVault = 0)
-                instructionData   // actual instruction data
-            ])
-        })
-    );
-
-    console.log("Sending transaction...");
-    console.log("Admin:", provider.wallet.publicKey.toString());
-    console.log("Mint:", mint.toString());
-    console.log("Multisig Info PDA:", multisigInfoPda.toString());
-    console.log("Treasury Vault PDA:", treasuryVaultPda.toString());
-    console.log("Program ID:", program.programId.toString());
-    console.log("Token Program:", PINOCCHIO_TOKEN_PROGRAM_ID.toString());
-
-    try {
-        const signature = await provider.sendAndConfirm(tx, [], {
-            commitment: 'confirmed',
-            preflightCommitment: 'confirmed',
-            skipPreflight: false
-        });
-        
-        console.log("Transaction signature:", signature);
-        console.log(`View on Solana Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
-
-    } catch (error) {
-        console.error("Transaction failed:", error);
-        if (error.logs) {
-            console.error("Program logs:");
-            error.logs.forEach((log, i) => console.error(`  ${i}: ${log}`));
-        }
-        throw error;
-    }
-});
-
-    it("Add member", async () => {
         this.timeout(60000); 
 
         const existingMultisigInfo = await connection.getAccountInfo(multisigInfoPda);
-        if (existingMultisigInfo && existingMultisigInfo.data.length > 0) {
+            if (existingMultisigInfo && existingMultisigInfo.data.length > 0) {
             console.log("Multisig vault already initialized, skipping...");
             return;
-        };
+        }
+
+        const multisigIdBuffer = MULTISIG_ID.toBuffer("le", 8);     // 8 bytes (0-7)
+        const threshold = new BN(2).toBuffer("le", 8);             // 8 bytes (8-15)  
+        const proposalExpiry = new BN(86400).toBuffer("le", 8);    // 8 bytes (16-23)
+        const minimumBalance = new BN(1000000).toBuffer("le", 8);  // 8 bytes (24-31)
+    
+        const instructionData = Buffer.concat([
+            multisigIdBuffer,     // bytes 0-7
+            threshold,           // bytes 8-15
+            proposalExpiry,      // bytes 16-23  
+            minimumBalance       // bytes 24-31
+        ]);
+
+        console.log("Instruction data length:", instructionData.length);
+        console.log("Expected length: 32 bytes");
+    
+        const tx = new Transaction().add(
+            new TransactionInstruction({
+                keys: [
+                    {
+                        pubkey: provider.wallet.publicKey, // admin
+                        isSigner: true,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: mint, // mint
+                        isSigner: false,
+                        isWritable: false,
+                    },
+                    {
+                        pubkey: multisigInfoPda, // multisig_info
+                        isSigner: false,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: treasuryVaultPda, // treasury_vault_account
+                        isSigner: false,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: PINOCCHIO_TOKEN_PROGRAM_ID, // token_program
+                        isSigner: false,
+                        isWritable: false,
+                    },
+                    {
+                        pubkey: SystemProgram.programId, // system_program
+                        isSigner: false,
+                        isWritable: false,
+                    }
+                ],
+                programId: program.programId,
+                data: Buffer.concat([
+                    Buffer.from([0]), // instruction discriminant (InitMultisigVault = 0)
+                    instructionData   // actual instruction data
+                ])
+            })
+        );
+
+        console.log("Sending transaction...");
+        console.log("Admin:", provider.wallet.publicKey.toString());
+        console.log("Mint:", mint.toString());
+        console.log("Multisig Info PDA:", multisigInfoPda.toString());
+        console.log("Treasury Vault PDA:", treasuryVaultPda.toString());
+        console.log("Program ID:", program.programId.toString());
+        console.log("Token Program:", PINOCCHIO_TOKEN_PROGRAM_ID.toString());
+
+        try {
+            const signature = await provider.sendAndConfirm(tx, [], {
+                commitment: 'confirmed',
+                preflightCommitment: 'confirmed',
+                skipPreflight: false
+            });
+        
+            console.log("Transaction signature:", signature);
+            console.log(`View on Solana Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+
+        } catch (error) {
+            console.error("Transaction failed:", error);
+            if (error.logs) {
+                console.error("Program logs:");
+                error.logs.forEach((log, i) => console.error(`  ${i}: ${log}`));
+            }
+            throw error;
+        }
+    });
+
+    it("Add member", async function() {
+        this.timeout(60000); 
+
+        const existingMultisigInfo = await connection.getAccountInfo(multisigInfoPda);
+        if (!existingMultisigInfo || existingMultisigInfo.data.length === 0) {
+            console.log("Multisig vault not initialized, skipping add member test...");
+            return;
+        }
 
         const instructionDiscriminant = Buffer.from([1]); 
-
         const multisigIdBuffer = MULTISIG_ID.toBuffer("le", 8);
         const instructionData = Buffer.concat([instructionDiscriminant, multisigIdBuffer]);
 
@@ -294,23 +290,32 @@ describe("Multi Signature Vault", function() {
             })
         );
 
-        console.log("Sending Add Member Transaction...");
-        console.log("Admin:", provider.wallet.publicKey.toString());
-        console.log("Member to be added: ",provider.wallet.publicKey.toString());
-        console.log("Multisig Info PDA:", multisigInfoPda.toString());
-        console.log("Program ID:", program.programId.toString());
+    console.log("Sending Add Member Transaction...");
+    console.log("Admin:", provider.wallet.publicKey.toString());
+    console.log("Member to be added:", provider.wallet.publicKey.toString());
+    console.log("Multisig Info PDA:", multisigInfoPda.toString());
+    console.log("Program ID:", program.programId.toString());
 
+    try {
         const signature = await provider.sendAndConfirm(tx, [], {
             commitment: 'confirmed',
             preflightCommitment: 'confirmed',
             skipPreflight: false
         });
 
-        console.log(`Transction Signature: ${signature}`);
+        console.log(`Transaction Signature: ${signature}`);
+        console.log(`View on Solana Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+    } catch (error) {
+        console.error("Add member transaction failed:", error);
+        if (error.logs) {
+            console.error("Program logs:");
+            error.logs.forEach((log, i) => console.error(`  ${i}: ${log}`));
+        }
+        throw error;
+    }
+});
 
-    })
-
-    it("Create Stream Proposal", async () => {
+    it("Create Stream Proposal", async function() {
         this.timeout(60000); 
 
         const instructionDiscriminant = Buffer.from([2]); 
@@ -355,6 +360,11 @@ describe("Multi Signature Vault", function() {
                         isWritable: true,
                     },
                     {
+                        pubkey: multisigInfoPda, // multisig_info
+                        isSigner: false,
+                        isWritable: true,
+                    },
+                    {
                         pubkey: SystemProgram.programId, // system_program
                         isSigner: false,
                         isWritable: false,
@@ -376,4 +386,62 @@ describe("Multi Signature Vault", function() {
         console.log("Transaction signature:", signature);
         console.log(`View on Solana Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
     });
+
+    it("Vote On Proposal", async function () {
+        this.timeout(60000); 
+        const VOTE_TYPE = new BN(0);
+
+        const instructionDiscriminant = Buffer.from([3]); 
+        const proposalIdBuffer = PROPOSAL_ID.toBuffer("le", 8); 
+        const multisigIdBuffer = MULTISIG_ID.toBuffer("le", 8); 
+        const voteType = VOTE_TYPE.toBuffer("le", 8);
+
+        const instructionData = Buffer.concat([
+            instructionDiscriminant,
+            proposalIdBuffer,
+            multisigIdBuffer,
+            voteType
+        ]);
+
+        console.log("Instruction data length:", instructionData.length); 
+        console.log(`Instruction Data: ${instructionData}`);
+
+        const tx = new Transaction().add(
+            new TransactionInstruction({
+                keys: [
+                    {
+                        pubkey: provider.wallet.publicKey, // proposer
+                        isSigner: true,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: streamProposalAccount, // stream_proposal_account
+                        isSigner: false,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: multisigInfoPda, // multisig_info
+                        isSigner: false,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: SystemProgram.programId, // system_program
+                        isSigner: false,
+                        isWritable: false,
+                    }
+                ],
+                programId: program.programId,
+                data: instructionData
+            })
+        );
+
+        const signature = await provider.sendAndConfirm(tx, [], {
+            commitment: 'confirmed',
+            preflightCommitment: 'confirmed',
+            skipPreflight: false
+        });
+
+        console.log("Transaction signature:", signature);
+        console.log(`View on Solana Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+    })
 });

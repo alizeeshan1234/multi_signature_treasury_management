@@ -6,15 +6,15 @@ use crate::states::MultiSignatureVault;
 pub fn process_add_member(accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
 
     if accounts.len() < 4 {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     let [admin, member, multisig_info, system_program] = accounts else {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     if !admin.is_signer() {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::MissingRequiredSignature);
     };
 
     let multisig_id = u64::from_le_bytes(
@@ -42,6 +42,21 @@ pub fn process_add_member(accounts: &[AccountInfo], instruction_data: &[u8]) -> 
         return Err(ProgramError::InvalidAccountData);
     }
 
+    if multisig_account_info.member_count >= 10 {
+        log!("Cannot add member: maximum capacity (10) reached");
+        return Err(ProgramError::AccountDataTooSmall);
+    }
+
+    if *member.key() == Pubkey::default() {
+        log!("Cannot add default/zero address as member");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    if *member.key() == multisig_account_info.admin {
+        log!("Admin cannot be added as a regular member");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     for i in 0..10 {
         if multisig_account_info.member_keys[i] == *member.key() {
             log!("Member already exists in the member list!");
@@ -61,12 +76,12 @@ pub fn process_add_member(accounts: &[AccountInfo], instruction_data: &[u8]) -> 
 
     if !member_added {
         log!("Cannot add member: maximum capacity (10) reached");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::AccountDataTooSmall);
     }
 
     multisig_account_info.member_count = multisig_account_info.member_count.checked_add(1).unwrap();
     multisig_account_info.last_updated = Clock::get()?.unix_timestamp;
-    log!("Member added successfully!");
+    log!("Member added successfully! Total members: {}", multisig_account_info.member_count);
 
     Ok(())
 }

@@ -1,16 +1,15 @@
 use pinocchio::{account_info::AccountInfo, instruction::Signer, program_error::ProgramError, pubkey::Pubkey, sysvars::{clock::Clock, rent::Rent, Sysvar}, *};
 use pinocchio_system::instructions::CreateAccount;
-use pinocchio_token::{state::TokenAccount, instructions::InitializeAccount3, *};
 
-use crate::states::stream_proposal::{StreamProposal, StreamType, ProposalStatus};
+use crate::states::{MultiSignatureVault, StreamProposal, StreamType, ProposalStatus};
 
 pub fn process_create_stream_proposal(accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
 
-    if accounts.len() < 3 {
+    if accounts.len() < 4 {
         return Err(ProgramError::InvalidAccountData);
     };
 
-    let [proposer, stream_propsoal_account, system_program] = accounts else {
+    let [proposer, stream_proposal_account, multisig_account, system_program] = accounts else {
         return Err(ProgramError::InvalidAccountData);
     };
 
@@ -19,7 +18,7 @@ pub fn process_create_stream_proposal(accounts: &[AccountInfo], instruction_data
     }
 
     if instruction_data.len() < 186 {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::InvalidInstructionData);
     };
 
     let proposal_id = u64::from_le_bytes(
@@ -44,16 +43,55 @@ pub fn process_create_stream_proposal(accounts: &[AccountInfo], instruction_data
     let mut stream_description = [0u8; 128];
     stream_description.copy_from_slice(&instruction_data[58..186]);
 
+    // Validate stream type
+    let _stream_type = StreamType::try_from(&stream_type_raw)?;
+
+    // Validate voting deadline is in the future
+    let current_time = Clock::get()?.unix_timestamp;
+    if voting_deadline <= current_time {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    // Load and validate multisig account
+    let multisig_account_info = MultiSignatureVault::from_account_info(multisig_account)?;
+    
+    let (multisig_info_pda, _) = pubkey::find_program_address(
+        &[b"multisig_info", multisig_account_info.admin.as_ref(), multisig_id.to_le_bytes().as_ref()],
+        &crate::ID
+    );
+
+    if *multisig_account.key() != multisig_info_pda {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    // Validate proposer is a member of the multisig
+    let mut is_multisig_member = false;
+    for member in multisig_account_info.member_keys {
+        if *proposer.key() == member {
+            is_multisig_member = true;
+            break;
+        }
+    }
+
+    if !is_multisig_member {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    // Validate threshold is reasonable
+    if required_threshold == 0 || required_threshold as u64 > multisig_account_info.member_count {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
     let (stream_proposal_account_pda, bump) = pubkey::find_program_address(
         &[b"stream_proposal", proposal_id.to_le_bytes().as_ref(), multisig_id.to_le_bytes().as_ref()],
         &crate::ID
     );
 
-    if *stream_propsoal_account.key() != stream_proposal_account_pda {
+    if *stream_proposal_account.key() != stream_proposal_account_pda {
         return Err(ProgramError::InvalidAccountData);
     };
 
-    if stream_propsoal_account.data_is_empty() {
+    if stream_proposal_account.data_is_empty() {
         let lamports = Rent::get()?.minimum_balance(StreamProposal::SIZE);
 
         let proposal_id_ref = proposal_id.to_le_bytes();
@@ -69,29 +107,33 @@ pub fn process_create_stream_proposal(accounts: &[AccountInfo], instruction_data
 
         CreateAccount {
             from: proposer,
-            to: stream_propsoal_account,
+            to: stream_proposal_account,
             lamports,
             space: StreamProposal::SIZE as u64,
             owner: &crate::ID
         }.invoke_signed(&[signer_seeds])?;
 
-        let mut stream_propsoal_account_info = StreamProposal::from_account_info_mut(stream_propsoal_account)?;
-        stream_propsoal_account_info.proposer = *proposer.key();
-        stream_propsoal_account_info.stream_name = stream_name;
-        stream_propsoal_account_info.stream_description = stream_description;
-        stream_propsoal_account_info.proposal_id = proposal_id;
-        stream_propsoal_account_info.multisig_id = multisig_id;
-        stream_propsoal_account_info.stream_type = stream_type_raw;
-        stream_propsoal_account_info.created_at = Clock::get()?.unix_timestamp;
-        stream_propsoal_account_info.voting_deadline = voting_deadline;
-        stream_propsoal_account_info.approvals = [Pubkey::default(); 10];
-        stream_propsoal_account_info.approval_count = 0;
-        stream_propsoal_account_info.rejections = [Pubkey::default(); 10];
-        stream_propsoal_account_info.rejection_count = 0;
-        stream_propsoal_account_info.required_threshold = required_threshold;
-        stream_propsoal_account_info.status = 0;
+        let mut stream_proposal_account_info = StreamProposal::from_account_info_mut(stream_proposal_account)?;
+        
+        stream_proposal_account_info.proposer = *proposer.key();
+        stream_proposal_account_info.stream_name = stream_name;
+        stream_proposal_account_info.stream_description = stream_description;
+        stream_proposal_account_info.proposal_id = proposal_id;
+        stream_proposal_account_info.multisig_id = multisig_id;
+        stream_proposal_account_info.stream_type = stream_type_raw;
+        stream_proposal_account_info.created_at = current_time;
+        stream_proposal_account_info.voting_deadline = voting_deadline;
+        stream_proposal_account_info.approvals = [Pubkey::default(); 10];
+        stream_proposal_account_info.approval_count = 0;
+        stream_proposal_account_info.rejections = [Pubkey::default(); 10];
+        stream_proposal_account_info.rejection_count = 0;
+        stream_proposal_account_info.total_vote_count = 0;
+        stream_proposal_account_info.required_threshold = required_threshold;
+        stream_proposal_account_info.status = ProposalStatus::Active as u8;
+        
     } else {
         return Err(ProgramError::AccountAlreadyInitialized);
     }
+    
     Ok(())
 }

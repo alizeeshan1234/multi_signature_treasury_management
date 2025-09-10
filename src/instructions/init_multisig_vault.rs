@@ -7,15 +7,15 @@ use crate::states::MultiSignatureVault;
 pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
 
     if accounts.len() < 6 {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     let [admin, mint, multisig_info, treasury_vault, token_program, system_program] = accounts else {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     if !admin.is_signer() {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::MissingRequiredSignature);
     };
 
     if instruction_data.len() < 32 {
@@ -38,6 +38,21 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
         instruction_data[24..32].try_into().map_err(|_| ProgramError::InvalidInstructionData)?
     );
 
+    // Fixed: Validate threshold is reasonable (at least 1, max 10)
+    if threshold == 0 || threshold > 10 {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    // Fixed: Validate proposal expiry is positive (duration, not absolute time)
+    if proposal_expiry <= 0 {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    // Fixed: Validate mint is not default address
+    if *mint.key() == Pubkey::default() {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     let (multisig_info_pda, multisig_info_bump) = pubkey::find_program_address(
         &[b"multisig_info", admin.key().as_ref(), multisig_id.to_le_bytes().as_ref()],
         &crate::ID
@@ -47,14 +62,20 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
         return Err(ProgramError::InvalidAccountData);
     };
 
+    // Fixed: Use multisig_info_pda instead of admin.key() for consistency
     let (treasury_vault_pda, treasury_vault_bump) = pubkey::find_program_address(
-        &[b"multisig_vault", mint.key().as_ref(), admin.key().as_ref()],
+        &[b"multisig_vault", mint.key().as_ref(), multisig_info_pda.as_ref()],
         &crate::ID
     );
 
     if *treasury_vault.key() != treasury_vault_pda {
         return Err(ProgramError::InvalidAccountData);
     };
+
+    // Fixed: Validate token program is correct
+    if *token_program.key() != pinocchio_token::id() {
+        return Err(ProgramError::IncorrectProgramId);
+    }
 
     if treasury_vault.data_is_empty() {
         let lamports = Rent::get()?.minimum_balance(TokenAccount::LEN);
@@ -63,7 +84,7 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
         let seeds = seeds!(
             b"multisig_vault", 
             mint.key().as_ref(), 
-            admin.key().as_ref(),
+            multisig_info_pda.as_ref(), // Fixed: Use PDA instead of admin key
             bump_ref
         );
         let signer_seeds = Signer::from(&seeds);
@@ -107,6 +128,7 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
         }.invoke_signed(&[signer_seeds])?;
 
         let mut multi_signature_vault_info = MultiSignatureVault::from_account_info_mut(multisig_info)?;
+        let current_time = Clock::get()?.unix_timestamp;
 
         multi_signature_vault_info.id = multisig_id;
         multi_signature_vault_info.admin = *admin.key();
@@ -117,8 +139,8 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
         multi_signature_vault_info.proposal_expiry = proposal_expiry;
         multi_signature_vault_info.total_proposals = 0;
         multi_signature_vault_info.treasury_vault = *treasury_vault.key();
-        multi_signature_vault_info.created_at = Clock::get()?.unix_timestamp;
-        multi_signature_vault_info.last_updated = Clock::get()?.unix_timestamp;
+        multi_signature_vault_info.created_at = current_time;
+        multi_signature_vault_info.last_updated = current_time; // Fixed: Use same timestamp
         multi_signature_vault_info.minimum_balance = minimum_balance;
         multi_signature_vault_info.active_proposals = 0;
         multi_signature_vault_info.executed_proposals = 0;
@@ -127,9 +149,9 @@ pub fn process_init_multisig_vault(accounts: &[AccountInfo], instruction_data: &
     } else {
         return Err(ProgramError::AccountAlreadyInitialized);
     };
+    
     Ok(())
 }
-
 // ======================= TESTING process_init_multisig_vault =======================
 
 // #[cfg(test)]

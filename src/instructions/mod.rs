@@ -15,19 +15,24 @@ pub enum MultiSignatureInstructions {
     #[account(3, writable, name="treasury_vault_account", desc="treasury vault account")]
     #[account(4, name="token_program", desc="TokenProgram")]
     #[account(5, name="system_program", desc="System program")]
-    InitMultisigVault = 0, //Create multi-sign vault (name, description, members, threshold)
+    InitMultisigVault = 0, 
     
     #[account(0, writable, signer, name="admin", desc="Account that pays for account creation")]
     #[account(1, name="member", desc="member to add")]
     #[account(2, writable, name="multisig_info", desc="multisig_info account")]
     #[account(3, name="system_program", desc="System program")]
-    AddMember = 1, //Add new member to the multi-sign vault
+    AddMember = 1, 
 
     #[account(0, writable, signer, name="proposer", desc="Account that pays for account creation")]
     #[account(1, writable, name="stream_propsoal_account", desc="stream_propsoal_account")]
-    #[account(2, name="system_program", desc="System program")]
+    #[account(2, name = "multisig_account", desc = "multisig account that the proposal belongs to")]
+    #[account(3, name="system_program", desc="System program")]
     CreateStreamProposal = 2,
 
+    #[account(0, writable, signer, name="voter", desc="person who is voting")]
+    #[account(1, writable, name="stream_proposal_account", desc="stream_propsoal_account")]
+    #[account(2, writable, name="multisig_info", desc="multisig_info account")]
+    #[account(3, name="system_program", desc="System program")]
     VoteOnProposal = 3,
 
 }

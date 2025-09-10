@@ -55,7 +55,7 @@
         }
       ],
       "args": [
-        {
+         {
           "name": "multisigId",
           "type": "u64"
         },
@@ -125,9 +125,81 @@
       }
     },
     {
-      "name": "MultisigVaultReview",
-      "accounts": [],
-      "args": [],
+      "name": "CreateStreamProposal",
+      "accounts": [
+        {
+          "name": "proposer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Account that pays for account creation"
+          ]
+        },
+        {
+          "name": "streamPropsoalAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "stream_propsoal_account"
+          ]
+        },
+        {
+          "name": "multisigAccount",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "multisig account that the proposal belongs to"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "proposalId",
+          "type": "u64"
+        },
+        {
+          "name": "multisigId",
+          "type": "u64"
+        },
+        {
+          "name": "streamType",
+          "type": "u8"
+        },
+        {
+          "name": "requiredThreshold",
+          "type": "u8"
+        },
+        {
+          "name": "votingDeadline",
+          "type": "i64"
+        },
+        {
+          "name": "streamName",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "streamDescription",
+          "type": {
+            "array": [
+              "u8",
+              128
+            ]
+          }
+        }
+      ],
       "discriminant": {
         "type": "u8",
         "value": 2
@@ -151,24 +223,6 @@
           {
             "name": "isActive",
             "type": "bool"
-          },
-          {
-            "name": "name",
-            "type": {
-              "array": [
-                "u8",
-                12
-              ]
-            }
-          },
-          {
-            "name": "description",
-            "type": {
-              "array": [
-                "u8",
-                80
-              ]
-            }
           },
           {
             "name": "memberCount",
@@ -225,6 +279,90 @@
           },
           {
             "name": "treasuryVaultBump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StreamProposal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "proposer",
+            "type": "publicKey"
+          },
+          {
+            "name": "streamName",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "streamDescription",
+            "type": {
+              "array": [
+                "u8",
+                128
+              ]
+            }
+          },
+          {
+            "name": "proposalId",
+            "type": "u64"
+          },
+          {
+            "name": "multisigId",
+            "type": "u64"
+          },
+          {
+            "name": "streamType",
+            "type": "u8"
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          },
+          {
+            "name": "votingDeadline",
+            "type": "i64"
+          },
+          {
+            "name": "approvals",
+            "type": {
+              "array": [
+                "publicKey",
+                10
+              ]
+            }
+          },
+          {
+            "name": "approvalCount",
+            "type": "u8"
+          },
+          {
+            "name": "rejections",
+            "type": {
+              "array": [
+                "publicKey",
+                10
+              ]
+            }
+          },
+          {
+            "name": "rejectionCount",
+            "type": "u8"
+          },
+          {
+            "name": "requiredThreshold",
+            "type": "u8"
+          },
+          {
+            "name": "status",
             "type": "u8"
           }
         ]

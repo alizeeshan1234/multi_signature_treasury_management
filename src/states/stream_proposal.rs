@@ -15,6 +15,7 @@ pub struct StreamProposal {
     pub approval_count: u8,
     pub rejections: [Pubkey; 10],        
     pub rejection_count: u8,
+    pub total_vote_count: u64,
     pub required_threshold: u8,
     pub status: u8,
 }
