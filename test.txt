@@ -55,7 +55,7 @@
         }
       ],
       "args": [
-         {
+        {
           "name": "multisigId",
           "type": "u64"
         },
@@ -203,6 +203,64 @@
       "discriminant": {
         "type": "u8",
         "value": 2
+      }
+    },
+    {
+      "name": "VoteOnProposal",
+      "accounts": [
+        {
+          "name": "voter",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "person who is voting"
+          ]
+        },
+        {
+          "name": "streamProposalAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "stream_proposal_account"
+          ]
+        },
+        {
+          "name": "multisigInfo",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "multisig_info account"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "proposalId",
+          "type": "u64"
+        },
+        {
+          "name": "multisigId",
+          "type": "u64"
+        },
+        {
+          "name": "voteType",
+          "type": "u64",
+          "docs": [
+            "0 for approval, 1 for rejection"
+          ]
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 3
       }
     }
   ],
@@ -356,6 +414,10 @@
           {
             "name": "rejectionCount",
             "type": "u8"
+          },
+          {
+            "name": "totalVoteCount",
+            "type": "u64"
           },
           {
             "name": "requiredThreshold",

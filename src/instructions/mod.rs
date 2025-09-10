@@ -5,6 +5,7 @@ pub mod init_multisig_vault;
 pub mod add_members;
 pub mod create_stream_proposal;
 pub mod vote_on_proposal;
+pub mod deposit_funds;
 
 #[repr(u8)]
 #[derive(ShankInstruction)]
@@ -35,8 +36,14 @@ pub enum MultiSignatureInstructions {
     #[account(3, name="system_program", desc="System program")]
     VoteOnProposal = 3,
 
-    // NEW - Phase 1 ----- (In Progress)
-    DepositTokens = 4,           // Anyone can deposit
+    #[account(0, writable, signer, name="admin", desc="Account that pays for account creation")]
+    #[account(1, name="mint", desc="mint account")]
+    #[account(2, writable, name="source_token_account", desc="source_token_account")]
+    #[account(3, writable, name="treasury_vault_account", desc="treasury vault account")]
+    #[account(4, writable, name="multisig_info", desc="multisig_info account")]
+    #[account(5, name="token_program", desc="Token program")]
+    #[account(6, name="system_program", desc="System program")]
+    DepositTokens = 4,           // Only Admin can deposit
     ExecuteApprovedProposal = 5, // Execute approved proposals
     ClaimStreamPayment = 6,      // Recipients claim their payments
 

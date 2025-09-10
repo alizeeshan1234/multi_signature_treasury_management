@@ -221,7 +221,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "stream_proposal_account"
+            "stream_propsoal_account"
           ]
         },
         {
@@ -261,6 +261,135 @@
       "discriminant": {
         "type": "u8",
         "value": 3
+      }
+    },
+    {
+      "name": "DepositTokens",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Account that pays for account creation"
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "mint account"
+          ]
+        },
+        {
+          "name": "sourceTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "source_token_account"
+          ]
+        },
+        {
+          "name": "treasuryVaultAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "treasury vault account"
+          ]
+        },
+        {
+          "name": "multisigInfo",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "multisig_info account"
+          ]
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Token program"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "multisigId",
+          "type": "u64"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 4
+      }
+    },
+    {
+      "name": "ExecuteApprovedProposal",
+      "accounts": [],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 5
+      }
+    },
+    {
+      "name": "ClaimStreamPayment",
+      "accounts": [],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 6
+      }
+    },
+    {
+      "name": "RemoveMember",
+      "accounts": [],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 7
+      }
+    },
+    {
+      "name": "UpdateThreshold",
+      "accounts": [],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 8
+      }
+    },
+    {
+      "name": "PauseResumeStream",
+      "accounts": [],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 9
+      }
+    },
+    {
+      "name": "EmergencyPause",
+      "accounts": [],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 10
       }
     }
   ],

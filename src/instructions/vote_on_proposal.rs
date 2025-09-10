@@ -74,10 +74,8 @@ pub fn process_vote_on_proposal(accounts: &[AccountInfo], instruction_data: &[u8
         return Err(ProgramError::Custom(2003)); // Proposal not active
     };
 
-    // Check for double voting before processing
     let voter_key = *voter.key();
     
-    // Check if voter has already voted in either approval or rejection list
     for approval in stream_proposal_account_info.approvals {
         if approval == voter_key {
             return Err(ProgramError::Custom(2004)); 

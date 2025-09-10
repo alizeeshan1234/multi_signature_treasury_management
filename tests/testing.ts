@@ -4,6 +4,7 @@ import { Connection, PublicKey, Keypair, SystemProgram, Transaction, Transaction
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 import fs from "fs";
 import BN from "bn.js";
+import { createMint, getAssociatedTokenAddress, getOrCreateAssociatedTokenAccount, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, mintTo } from "@solana/spl-token";
 
 const idl = JSON.parse(
     fs.readFileSync("./idl/multi_signature_treasury_management.json", "utf-8")
@@ -16,8 +17,8 @@ if (!idl.metadata?.address) {
 const PINOCCHIO_TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
 describe("Multi Signature Vault", function() {
-    const MULTISIG_ID = new BN(206);
-    const PROPOSAL_ID = new BN(11);
+    const MULTISIG_ID = new BN(208);
+    const PROPOSAL_ID = new BN(13);
     let connection: Connection;
     let program: Program;
     let provider: AnchorProvider;
@@ -26,6 +27,7 @@ describe("Multi Signature Vault", function() {
     let mint: PublicKey;
     let payer: Keypair;
     let streamProposalAccount: PublicKey;
+    let sourceTokenAccount: PublicKey;
 
     before(async function() {
         this.timeout(60000); 
@@ -77,7 +79,7 @@ describe("Multi Signature Vault", function() {
                 [
                     Buffer.from("multisig_vault"), 
                     mint.toBuffer(), 
-                    provider.wallet.publicKey.toBuffer(),
+                    MULTISIG_ID.toBuffer("le", 8)
                 ],
                 program.programId
             );
@@ -149,6 +151,15 @@ describe("Multi Signature Vault", function() {
             console.error("Error creating mint:", error);
             throw error;
         }
+
+        const sourceTokenAccountCreate = await getOrCreateAssociatedTokenAccount(
+            provider.connection,
+            payer,
+            mint,
+            provider.wallet.publicKey,
+        );
+
+        sourceTokenAccount = sourceTokenAccountCreate.address;
     }
 
    it("Initialize multisignature vault", async function() {
@@ -434,6 +445,75 @@ describe("Multi Signature Vault", function() {
                 data: instructionData
             })
         );
+
+        const signature = await provider.sendAndConfirm(tx, [], {
+            commitment: 'confirmed',
+            preflightCommitment: 'confirmed',
+            skipPreflight: false
+        });
+
+        console.log("Transaction signature:", signature);
+        console.log(`View on Solana Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+    });
+
+    it("Deposit Funds", async function() {
+        this.timeout(60000); 
+        let AMOUNT = new BN(1);
+
+        const instructionDiscriminant = Buffer.from([4]); 
+        const multisigIdBuffer = MULTISIG_ID.toBuffer("le", 8);
+        const amountBuffer = AMOUNT.toBuffer("le", 8);
+
+        let instructionData = Buffer.concat([
+            instructionDiscriminant,
+            multisigIdBuffer,
+            amountBuffer
+        ]);
+
+
+        const tx = new Transaction().add(
+            new TransactionInstruction({
+                keys: [
+                    {
+                        pubkey: provider.wallet.publicKey, // admin
+                        isSigner: true,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: mint, // mint
+                        isSigner: false,
+                        isWritable: false,
+                    },
+                    {
+                        pubkey: sourceTokenAccount,
+                        isSigner: false,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: treasuryVaultPda, // treasury_vault_account
+                        isSigner: false,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: multisigInfoPda, // multisig_info
+                        isSigner: false,
+                        isWritable: true,
+                    },
+                    {
+                        pubkey: PINOCCHIO_TOKEN_PROGRAM_ID, // token_program
+                        isSigner: false,
+                        isWritable: false,
+                    },
+                    {
+                        pubkey: SystemProgram.programId, // system_program
+                        isSigner: false,
+                        isWritable: false,
+                    }
+                ],
+                programId: program.programId,
+                data: instructionData,
+            })
+        )
 
         const signature = await provider.sendAndConfirm(tx, [], {
             commitment: 'confirmed',

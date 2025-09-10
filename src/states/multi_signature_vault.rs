@@ -22,7 +22,25 @@ pub struct MultiSignatureVault {
 }
 
 impl MultiSignatureVault {
-    pub const SIZE: usize = core::mem::size_of::<MultiSignatureVault>();
+    pub const SIZE: usize = 
+        8 +    // id
+        32 +   // admin
+        1 +    // is_active
+        7 +    // padding after bool (Rust adds this automatically)
+        8 +    // member_count
+        320 +  // member_keys
+        8 +    // threshold
+        8 +    // proposal_expiry
+        8 +    // total_proposals
+        32 +   // treasury_vault
+        8 +    // created_at
+        8 +    // last_updated
+        8 +    // minimum_balance
+        8 +    // active_proposals
+        8 +    // executed_proposals
+        1 +    // bump
+        1 +    // treasury_vault_bump
+        6;     // explicit padding
 
     pub fn from_account_info(account: &AccountInfo) -> Result<Ref<Self>, ProgramError> {
         if account.data_len() < Self::SIZE {

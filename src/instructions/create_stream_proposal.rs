@@ -43,10 +43,8 @@ pub fn process_create_stream_proposal(accounts: &[AccountInfo], instruction_data
     let mut stream_description = [0u8; 128];
     stream_description.copy_from_slice(&instruction_data[58..186]);
 
-    // Validate stream type
     let _stream_type = StreamType::try_from(&stream_type_raw)?;
 
-    // Validate voting deadline is in the future
     let current_time = Clock::get()?.unix_timestamp;
     if voting_deadline <= current_time {
         return Err(ProgramError::InvalidInstructionData);
@@ -77,7 +75,6 @@ pub fn process_create_stream_proposal(accounts: &[AccountInfo], instruction_data
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    // Validate threshold is reasonable
     if required_threshold == 0 || required_threshold as u64 > multisig_account_info.member_count {
         return Err(ProgramError::InvalidInstructionData);
     }
