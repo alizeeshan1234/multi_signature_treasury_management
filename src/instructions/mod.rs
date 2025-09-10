@@ -35,6 +35,16 @@ pub enum MultiSignatureInstructions {
     #[account(3, name="system_program", desc="System program")]
     VoteOnProposal = 3,
 
+    // NEW - Phase 1 ----- (In Progress)
+    DepositTokens = 4,           // Anyone can deposit
+    ExecuteApprovedProposal = 5, // Execute approved proposals
+    ClaimStreamPayment = 6,      // Recipients claim their payments
+
+    // NEW - Phase 2 (later)
+    RemoveMember = 7,
+    UpdateThreshold = 8,
+    PauseResumeStream = 9,
+    EmergencyPause = 10,
 }
 
 impl TryFrom<&u8> for MultiSignatureInstructions {
@@ -46,6 +56,13 @@ impl TryFrom<&u8> for MultiSignatureInstructions {
             1 => Ok(MultiSignatureInstructions::AddMember),
             2 => Ok(MultiSignatureInstructions::CreateStreamProposal),
             3 => Ok(MultiSignatureInstructions::VoteOnProposal),
+            4 => Ok(MultiSignatureInstructions::DepositTokens),
+            5 => Ok(MultiSignatureInstructions::ExecuteApprovedProposal),
+            6 => Ok(MultiSignatureInstructions::ClaimStreamPayment),
+            7 => Ok(MultiSignatureInstructions::RemoveMember),
+            8 => Ok(MultiSignatureInstructions::UpdateThreshold),
+            9 => Ok(MultiSignatureInstructions::PauseResumeStream),
+            10 => Ok(MultiSignatureInstructions::EmergencyPause),
             _ => Err(ProgramError::InvalidInstructionData)
         }
     }
