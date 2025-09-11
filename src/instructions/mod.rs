@@ -10,6 +10,8 @@ pub mod deposit_funds;
 pub mod init_batch_payments;
 pub mod batch_payments;
 
+pub mod token_transfers;
+
 #[repr(u8)]
 #[derive(ShankInstruction)]
 pub enum MultiSignatureInstructions {
