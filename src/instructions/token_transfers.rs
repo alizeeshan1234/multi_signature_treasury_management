@@ -6,7 +6,7 @@ use pinocchio_token::instructions::InitializeAccount3;
 pub fn process_transfer_tokens(accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
 
     let [sender, recepient, mint, sender_token_account, recepient_token_account, token_program, system_program] = accounts else {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     if !sender.is_signer() {

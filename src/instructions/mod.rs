@@ -11,6 +11,7 @@ pub mod batch_payments;
 pub mod token_transfers;
 pub mod init_stream_payments;
 pub mod withdraw_stream_payments;
+pub mod cancel_stream;
 
 #[repr(u8)]
 #[derive(ShankInstruction)]

@@ -14,7 +14,7 @@ use crate::states::MultiSignatureVault;
 pub fn deposit_funds_to_treasury(accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
 
     let [admin, mint, source_token_account, treasury_vault, multisig_account, token_program, system_program] = accounts else {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     if !admin.is_signer() {

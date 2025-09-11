@@ -12,7 +12,7 @@ pub fn process_initialize_batch_state(accounts: &[AccountInfo], instruction_data
     };
 
     let [creator, mint, batch_state_account, creator_token_account, system_program, token_program] = accounts else {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     if instruction_data.len() < 9 {

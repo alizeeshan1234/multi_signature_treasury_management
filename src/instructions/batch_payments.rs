@@ -13,7 +13,7 @@ pub fn process_batch_transfer(accounts: &[AccountInfo], instruction_data: &[u8])
     }
 
     let [creator, creator_token_account, mint, batch_state, batch_transfer, token_program, rest @..] = accounts else {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     if instruction_data.len() != BatchTransfer::LEN {

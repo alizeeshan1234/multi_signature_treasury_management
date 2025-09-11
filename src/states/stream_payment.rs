@@ -20,9 +20,9 @@ pub struct PaymentStreamingInfo {
 }
 
 // stream instructions: 
-// -> Initialize Stream
-// -> Withdraw From Stream
-// -> Cancel Stream 
+// -> Initialize Stream (done)
+// -> Withdraw From Stream (done)
+// -> Cancel Stream  
 
 impl PaymentStreamingInfo {
     pub const SIZE: usize = core::mem::size_of::<PaymentStreamingInfo>();

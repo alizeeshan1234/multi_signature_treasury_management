@@ -3,10 +3,10 @@ use pinocchio_token::instructions::Transfer;
 
 use crate::states::PaymentStreamingInfo;
 
-pub fn process_withdraw_stream_payments(accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
+pub fn process_withdraw_stream_payments(accounts: &[AccountInfo]) -> ProgramResult {
 
     let [recipient, sender_token_account, recipient_token_account, payment_stream_info, token_program] = accounts else {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     if !recipient.is_signer() {
@@ -86,8 +86,7 @@ pub fn process_withdraw_stream_payments(accounts: &[AccountInfo], instruction_da
     Ok(())
 }
 
-fn calculate_withdrawable_amount(stream_info: &PaymentStreamingInfo, current_time: i64) -> Result<u64, ProgramError> {
-
+pub fn calculate_withdrawable_amount(stream_info: &PaymentStreamingInfo, current_time: i64) -> Result<u64, ProgramError> {
     let start_time = stream_info.start_time;
     let end_time = stream_info.end_time;
     let total_amount = stream_info.total_amount;

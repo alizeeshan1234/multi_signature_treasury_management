@@ -10,7 +10,7 @@ pub fn process_create_stream_proposal(accounts: &[AccountInfo], instruction_data
     };
 
     let [proposer, stream_proposal_account, multisig_account, system_program] = accounts else {
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     if !proposer.is_signer() {
