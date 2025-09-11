@@ -6,11 +6,10 @@ pub mod add_members;
 pub mod create_stream_proposal;
 pub mod vote_on_proposal;
 pub mod deposit_funds;
-
 pub mod init_batch_payments;
 pub mod batch_payments;
-
 pub mod token_transfers;
+pub mod init_stream_payments;
 
 #[repr(u8)]
 #[derive(ShankInstruction)]

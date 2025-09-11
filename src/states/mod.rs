@@ -9,3 +9,6 @@ pub use batch_state::*;
 
 pub mod batch_transfer;
 pub use batch_transfer::*;
+
+pub mod stream_payment;
+pub use stream_payment::*;
