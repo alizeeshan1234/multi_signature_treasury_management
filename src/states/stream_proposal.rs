@@ -47,11 +47,9 @@ impl StreamProposal {
 #[derive(Clone, Debug, PartialEq)]
 pub enum StreamType {
     BatchPayments,
-    TokenSwaps,
     TokenTransfers,
     PaymentStreaming,
     Vesting,
-    OneTimePayment,
 }
 
 impl TryFrom<&u8> for StreamType {
@@ -60,11 +58,9 @@ impl TryFrom<&u8> for StreamType {
     fn try_from(value: &u8) -> Result<Self, Self::Error> {
         match *value {
             0 => Ok(StreamType::BatchPayments),
-            1 => Ok(StreamType::TokenSwaps),
-            2 => Ok(StreamType::TokenTransfers),
-            3 => Ok(StreamType::PaymentStreaming),
-            4 => Ok(StreamType::Vesting),
-            5 => Ok(StreamType::OneTimePayment),
+            1 => Ok(StreamType::TokenTransfers),
+            2 => Ok(StreamType::PaymentStreaming),
+            3 => Ok(StreamType::Vesting),
             _ => Err(ProgramError::InvalidAccountData)
         }
     }
