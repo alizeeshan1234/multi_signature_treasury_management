@@ -54,11 +54,9 @@ pub enum MultiSignatureInstructions {
     #[account(4, writable, name="multisig_info", desc="multisig_info account")]
     #[account(5, name="token_program", desc="Token program")]
     #[account(6, name="system_program", desc="System program")]
-    DepositTokens = 4,           // Only Admin can deposit
-    ExecuteApprovedProposal = 5, // Execute approved proposals
-    ClaimStreamPayment = 6,      // Recipients claim their payments
-
-    // NEW - Phase 2 (later)
+    DepositTokens = 4,           
+    ExecuteApprovedProposal = 5, 
+    ClaimStreamPayment = 6,      
     ClaimVestedTokens = 7,
     DepositFundsVault = 8,
     CancelStream = 9,
