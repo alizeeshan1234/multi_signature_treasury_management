@@ -24,12 +24,11 @@ fn process_instruction(
         MultiSignatureInstructions::CreateStreamProposal => instructions::create_stream_proposal::process_create_stream_proposal(accounts, instruction_data)?,
         MultiSignatureInstructions::VoteOnProposal => instructions::vote_on_proposal::process_vote_on_proposal(accounts, instruction_data)?,
         MultiSignatureInstructions::DepositTokens => instructions::deposit_funds::deposit_funds_to_treasury(accounts, instruction_data)?,
-        MultiSignatureInstructions::ExecuteApprovedProposal => {},
-        MultiSignatureInstructions::ClaimStreamPayment => {},
-        MultiSignatureInstructions::RemoveMember => {},
-        MultiSignatureInstructions::UpdateThreshold => {},
-        MultiSignatureInstructions::PauseResumeStream => {},
-        MultiSignatureInstructions::EmergencyPause => {},
+        MultiSignatureInstructions::ExecuteApprovedProposal => instructions::execute_proposal::process_execute_proposal(accounts, instruction_data)?,
+        MultiSignatureInstructions::ClaimStreamPayment => instructions::withdraw_stream_payments::process_withdraw_stream_payments(accounts)?,
+        MultiSignatureInstructions::ClaimVestedTokens => instructions::claim_vested_tokens::process_claim_vested_tokens(accounts, instruction_data)?,
+        MultiSignatureInstructions::DepositFundsVault => instructions::deposit_tokens_vesting::process_deposit_token_vesting_vault(accounts, instruction_data)?,
+        MultiSignatureInstructions::CancelStream => instructions::cancel_stream::process_cancel_stream(accounts)?,
     }
 
     Ok(())

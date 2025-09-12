@@ -16,6 +16,7 @@ pub mod init_vesting;
 pub mod init_beneficiary;
 pub mod deposit_tokens_vesting;
 pub mod claim_vested_tokens;
+pub mod execute_proposal;
 
 #[repr(u8)]
 #[derive(ShankInstruction)]
@@ -58,10 +59,9 @@ pub enum MultiSignatureInstructions {
     ClaimStreamPayment = 6,      // Recipients claim their payments
 
     // NEW - Phase 2 (later)
-    RemoveMember = 7,
-    UpdateThreshold = 8,
-    PauseResumeStream = 9,
-    EmergencyPause = 10,
+    ClaimVestedTokens = 7,
+    DepositFundsVault = 8,
+    CancelStream = 9,
 }
 
 impl TryFrom<&u8> for MultiSignatureInstructions {
@@ -76,10 +76,9 @@ impl TryFrom<&u8> for MultiSignatureInstructions {
             4 => Ok(MultiSignatureInstructions::DepositTokens),
             5 => Ok(MultiSignatureInstructions::ExecuteApprovedProposal),
             6 => Ok(MultiSignatureInstructions::ClaimStreamPayment),
-            7 => Ok(MultiSignatureInstructions::RemoveMember),
-            8 => Ok(MultiSignatureInstructions::UpdateThreshold),
-            9 => Ok(MultiSignatureInstructions::PauseResumeStream),
-            10 => Ok(MultiSignatureInstructions::EmergencyPause),
+            7 => Ok(MultiSignatureInstructions::ClaimVestedTokens),
+            8 => Ok(MultiSignatureInstructions::DepositFundsVault),
+            9 => Ok(MultiSignatureInstructions::CancelStream),
             _ => Err(ProgramError::InvalidInstructionData)
         }
     }
