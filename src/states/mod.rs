@@ -13,4 +13,8 @@ pub use batch_transfer::*;
 pub mod stream_payment;
 pub use stream_payment::*;
 
+pub mod vesting_contract;
+pub use vesting_contract::*;
 
+pub mod vesting_record_info;
+pub use vesting_record_info::*;
