@@ -14,6 +14,8 @@ pub mod withdraw_stream_payments;
 pub mod cancel_stream;
 pub mod init_vesting;
 pub mod init_beneficiary;
+pub mod deposit_tokens_vesting;
+pub mod claim_vested_tokens;
 
 #[repr(u8)]
 #[derive(ShankInstruction)]
